@@ -1,0 +1,66 @@
+{
+  "name": "rankscore",
+  "displayName": "RankScore SEO (unofficial)",
+  "version": "0.1.0",
+  "description": "Unofficial plugin, not affiliated with or endorsed by RankScore. SEO skills and an MCP server for RankScore: content briefs and audits, keyword clusters, AI-search visibility, backlink profile, drift monitoring, technical and local SEO, schema, and roadmap planning, built on your own RankScore project data. Optional tools to queue articles, extend the content plan and start keyword discovery.",
+  "author": {
+    "name": "Jason Keirstead"
+  },
+  "license": "MIT",
+  "keywords": ["seo", "rankscore", "mcp", "content-brief", "keyword-research", "ai-search", "backlinks", "site-audit", "local-seo"],
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "RankScore API key",
+      "description": "From RankScore: Integrations > API > Manage. Enables list_articles and get_article. Leave empty to skip.",
+      "sensitive": true,
+      "required": false
+    },
+    "email": {
+      "type": "string",
+      "title": "RankScore account email",
+      "description": "With the password, enables the project tools (content plan, keywords, AI visibility, backlinks...). These use RankScore's dashboard API, which is not documented and can change.",
+      "required": false
+    },
+    "password": {
+      "type": "string",
+      "title": "RankScore account password",
+      "description": "Kept in the system credential store. The MCP server signs in with it and keeps the session in memory only.",
+      "sensitive": true,
+      "required": false
+    },
+    "project_id": {
+      "type": "string",
+      "title": "Default project id",
+      "description": "The UUID in the dashboard URL /dashboard/projects/<id>. Tools use it when no project_id is given.",
+      "required": false
+    },
+    "enable_writes": {
+      "type": "boolean",
+      "title": "Enable write tools",
+      "description": "Adds 18 tools that change your RankScore data or start jobs that use credits or quota (generate_article, add_calendar_entry, generate_content_plan...). Skills always ask before using them. Default off.",
+      "default": false,
+      "required": false
+    },
+    "credentials_file": {
+      "type": "file",
+      "title": "Credentials file (optional)",
+      "description": "Instead of the fields above: a file with the API key, email and password on lines 1, 2 and 3 (mode 600). Fields above take priority.",
+      "required": false
+    }
+  },
+  "mcpServers": {
+    "rankscore": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.mjs"],
+      "env": {
+        "RANKSCORE_API_KEY": "${user_config.api_key}",
+        "RANKSCORE_EMAIL": "${user_config.email}",
+        "RANKSCORE_PASSWORD": "${user_config.password}",
+        "RANKSCORE_PROJECT_ID": "${user_config.project_id}",
+        "RANKSCORE_ENABLE_WRITES": "${user_config.enable_writes}",
+        "RANKSCORE_CREDENTIALS_FILE": "${user_config.credentials_file}"
+      }
+    }
+  }
+}

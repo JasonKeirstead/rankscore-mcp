@@ -1,0 +1,21 @@
+{
+  "name": "rankscore-mcp",
+  "owner": {
+    "name": "Jason Keirstead"
+  },
+  "metadata": {
+    "description": "Unofficial Claude Code plugin for RankScore: SEO skills plus a RankScore MCP server. Not affiliated with RankScore.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "rankscore",
+      "source": "./plugin",
+      "description": "Unofficial, not affiliated with RankScore. SEO skills and an MCP server for RankScore, built on your own RankScore project data.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "category": "seo",
+      "keywords": ["seo", "rankscore", "mcp", "content-brief", "keyword-research", "ai-search", "backlinks"]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "rankscore-mcp",
+  "version": "0.1.0",
+  "description": "Unofficial MCP server and Claude plugin for RankScore: articles, content plan, keywords, AI visibility, backlinks, and opt-in write tools. Not affiliated with RankScore.",
+  "license": "MIT",
+  "author": "Jason Keirstead",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "rankscore-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "bundle": "node scripts/bundle.mjs",
+    "typecheck": "tsc --noEmit",
+    "validate:skills": "npm run build && node scripts/validate-skills.mjs",
+    "validate:plugin": "claude plugin validate ./plugin --strict && claude plugin validate . --strict",
+    "start": "node dist/index.js",
+    "live-check": "node scripts/live-check.mjs",
+    "live-write-check": "node scripts/live-write-check.mjs",
+    "test": "npm run build && npm run bundle && vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.12",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

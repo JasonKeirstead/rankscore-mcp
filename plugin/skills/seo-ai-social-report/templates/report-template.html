@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cross-channel report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #f6f7f9; --card: #ffffff; --text: #1c1d21; --muted: #646873; --border: #e2e4e9;
+  --accent: #4f46e5; --s1: #4f46e5; --s2: #0d9488; --s3: #d97706; --s4: #db2777; --s5: #64748b;
+  --up: #15803d; --down: #b91c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121316; --card: #1b1c21; --text: #e9eaee; --muted: #a1a4ad; --border: #2d2f36;
+    --accent: #818cf8; --s1: #818cf8; --s2: #2dd4bf; --s3: #fbbf24; --s4: #f472b6; --s5: #94a3b8;
+    --up: #4ade80; --down: #f87171;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 0 0 12px; }
+h3 { font-size: 14px; margin: 0 0 8px; }
+section { margin-top: 28px; }
+.meta { color: var(--muted); font-size: 13px; }
+.scope { margin-top: 12px; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--card); font-size: 13px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.kpi .value { font-size: 26px; font-weight: 650; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+.delta { font-size: 13px; font-weight: 600; }
+.delta.up { color: var(--up); } .delta.down { color: var(--down); } .delta.flat { color: var(--muted); }
+.kpi .src { color: var(--muted); font-size: 11px; margin-top: 6px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 12px; }
+.chart-box { position: relative; height: 280px; }
+.note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+details { margin-top: 8px; font-size: 13px; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+ul { margin: 0; padding-left: 20px; }
+li { margin: 4px 0; }
+a { color: var(--accent); }
+.warn { color: var(--down); font-size: 13px; margin-top: 8px; }
+footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+/*
+  FIELD GUIDE. Replace only the DATA object below. Use real values only.
+  Any part without data: null or [] (the section is then hidden; list it in "skipped").
+
+  title       string, e.g. "{Client}: cross-channel report"
+  period      { start: "YYYY-MM-DD", end: "YYYY-MM-DD", label: "October 2026", partial: true|false }
+  comparison  string or null, e.g. "September 2026"
+  generated   "YYYY-MM-DD"
+  scope       "RankScore data covers {domain} only."
+  kpis        [{ label, value (number or "48K"), delta ("+12%" or null), dir ("up"|"down"|"flat"|null), source }]
+  charts      [{ title, type ("line"|"bar"), labels: [...], yTitle, y2Title,
+                 series: [{ name, data: [numbers or null], axis ("y"|"y2"), kind ("line"|"bar", optional) }],
+                 note }]
+              Put a series with a much smaller scale on axis "y2". One label = one point, no trend line.
+  shareOfVoice  null or { title, labels: [brands], values: [numbers], unit: "%", note }
+  topPosts    [{ page, date, text, impressions, engagements, url ("https://..." or "") }]
+  moved       [strings]   watch  [strings]   skipped  [strings]
+  sources     [strings]
+*/
+const DATA = {
+  title: "Cross-channel report",
+  period: { start: "", end: "", label: "", partial: false },
+  comparison: null,
+  generated: "",
+  scope: "",
+  kpis: [],
+  charts: [],
+  shareOfVoice: null,
+  topPosts: [],
+  moved: [],
+  watch: [],
+  skipped: [],
+  sources: []
+};
+
+(function () {
+  "use strict";
+  const app = document.getElementById("app");
+  const root = getComputedStyle(document.documentElement);
+  const cssVar = (n) => root.getPropertyValue(n).trim();
+  const palette = ["--s1", "--s2", "--s3", "--s4", "--s5"].map(cssVar);
+  const has = (a) => Array.isArray(a) && a.length > 0;
+  const fmt = (v) => (typeof v === "number" ? v.toLocaleString("en-US") : (v == null ? "" : String(v)));
+  const chartOK = typeof Chart !== "undefined";
+
+  function el(tag, cls, ...kids) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    for (const k of kids) {
+      if (k == null || k === "") continue;
+      e.append(k instanceof Node ? k : String(k));
+    }
+    return e;
+  }
+
+  // Sections are attached to the page before any chart is drawn in them.
+  function section(title, ...kids) {
+    const s = el("section", null, el("h2", null, title), ...kids);
+    app.append(s);
+    return s;
+  }
+
+  function dataTable(labels, series) {
+    const head = el("tr", null, el("th", null, ""));
+    series.forEach((s) => head.append(el("th", "num", s.name)));
+    const body = el("tbody");
+    labels.forEach((lab, i) => {
+      const tr = el("tr", null, el("td", null, lab));
+      series.forEach((s) => tr.append(el("td", "num", s.data[i] == null ? "-" : fmt(s.data[i]))));
+      body.append(tr);
+    });
+    const d = el("details", null, el("summary", null, "Data table"), el("div", "scroll", el("table", null, el("thead", null, head), body)));
+    if (!chartOK) d.open = true;
+    return d;
+  }
+
+  function lineOrBarChart(parent, cfg) {
+    const card = el("div", "card", el("h3", null, cfg.title));
+    parent.append(card);
+    if (chartOK) {
+      const box = el("div", "chart-box");
+      const canvas = el("canvas");
+      box.append(canvas);
+      card.append(box);
+      const single = cfg.labels.length === 1;
+      const useY2 = cfg.series.some((s) => s.axis === "y2");
+      const datasets = cfg.series.map((s, i) => ({
+        label: s.name,
+        data: s.data,
+        type: s.kind || cfg.type || "line",
+        yAxisID: s.axis === "y2" ? "y2" : "y",
+        borderColor: palette[i % palette.length],
+        backgroundColor: palette[i % palette.length],
+        pointRadius: single ? 5 : 2,
+        showLine: !single,
+        spanGaps: false,
+        tension: 0.25
+      }));
+      const tick = { color: cssVar("--muted") };
+      const grid = { color: cssVar("--border") };
+      const scales = {
+        x: { ticks: tick, grid: grid },
+        y: { ticks: tick, grid: grid, beginAtZero: true, title: { display: !!cfg.yTitle, text: cfg.yTitle || "", color: cssVar("--muted") } }
+      };
+      if (useY2) {
+        scales.y2 = { position: "right", ticks: tick, grid: { drawOnChartArea: false }, beginAtZero: true,
+          title: { display: !!cfg.y2Title, text: cfg.y2Title || "", color: cssVar("--muted") } };
+      }
+      new Chart(canvas, {
+        type: cfg.type || "line",
+        data: { labels: cfg.labels, datasets: datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: { legend: { labels: { color: cssVar("--text") } } },
+          scales: scales
+        }
+      });
+    }
+    card.append(dataTable(cfg.labels, cfg.series));
+    if (cfg.note) card.append(el("div", "note", cfg.note));
+  }
+
+  // Header
+  const p = DATA.period || {};
+  document.title = DATA.title || "Cross-channel report";
+  const metaParts = [];
+  if (p.label) metaParts.push(p.label);
+  if (p.start && p.end) metaParts.push(p.start + " to " + p.end);
+  if (p.partial) metaParts.push("partial period");
+  if (DATA.comparison) metaParts.push("compared with " + DATA.comparison);
+  if (DATA.generated) metaParts.push("generated " + DATA.generated);
+  app.append(el("header", null,
+    el("h1", null, DATA.title),
+    el("div", "meta", metaParts.join(" | ")),
+    DATA.scope ? el("div", "scope", DATA.scope) : null));
+  if (!chartOK) app.append(el("div", "warn", "Charts need Chart.js from cdn.jsdelivr.net. The data tables show the same numbers."));
+
+  // KPI cards
+  if (has(DATA.kpis)) {
+    const grid = el("div", "kpis");
+    DATA.kpis.forEach((k) => {
+      const delta = k.delta ? el("div", "delta " + (k.dir || "flat"), k.delta) : null;
+      grid.append(el("div", "card kpi",
+        el("div", "label", k.label), el("div", "value", fmt(k.value)), delta,
+        k.source ? el("div", "src", k.source) : null));
+    });
+    section("Key numbers", grid);
+  }
+
+  // Trend charts
+  if (has(DATA.charts)) {
+    const grid = el("div", "grid2");
+    section("Trends", grid);
+    DATA.charts.forEach((c) => { if (has(c.labels) && has(c.series)) lineOrBarChart(grid, c); });
+  }
+
+  // Share of voice
+  const sov = DATA.shareOfVoice;
+  if (sov && has(sov.labels)) {
+    const unit = sov.unit || "";
+    const card = el("div", "card");
+    section(sov.title || "Share of voice", card);
+    if (chartOK) {
+      const box = el("div", "chart-box");
+      const canvas = el("canvas");
+      box.append(canvas);
+      card.append(box);
+      new Chart(canvas, {
+        type: "bar",
+        data: { labels: sov.labels, datasets: [{ label: "Share of voice" + (unit ? " (" + unit + ")" : ""), data: sov.values,
+          backgroundColor: sov.labels.map((_, i) => (i === 0 ? palette[0] : palette[4])) }] },
+        options: {
+          indexAxis: "y", responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true, ticks: { color: cssVar("--muted") }, grid: { color: cssVar("--border") } },
+                    y: { ticks: { color: cssVar("--text") }, grid: { display: false } } }
+        }
+      });
+    }
+    card.append(dataTable(sov.labels, [{ name: "Share" + (unit ? " (" + unit + ")" : ""), data: sov.values }]));
+    if (sov.note) card.append(el("div", "note", sov.note));
+  }
+
+  // Top posts
+  if (has(DATA.topPosts)) {
+    const body = el("tbody");
+    DATA.topPosts.forEach((t) => {
+      const textCell = el("td");
+      if (t.url && /^https:\/\//.test(t.url)) {
+        const a = el("a", null, t.text || t.url);
+        a.href = t.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+        textCell.append(a);
+      } else {
+        textCell.append(t.text || "");
+      }
+      body.append(el("tr", null, el("td", null, t.page), el("td", null, t.date), textCell,
+        el("td", "num", fmt(t.impressions)), el("td", "num", fmt(t.engagements))));
+    });
+    const head = el("tr", null, el("th", null, "Page"), el("th", null, "Date"), el("th", null, "Post"),
+      el("th", "num", "Impressions"), el("th", "num", "Engagements"));
+    section("Top posts", el("div", "card scroll", el("table", null, el("thead", null, head), body)));
+  }
+
+  // What moved / what to watch
+  if (has(DATA.moved) || has(DATA.watch)) {
+    const list = (items) => { const u = el("ul"); (items || []).forEach((x) => u.append(el("li", null, x))); return u; };
+    const grid = el("div", "grid2");
+    if (has(DATA.moved)) grid.append(el("div", "card", el("h3", null, "What moved"), list(DATA.moved)));
+    if (has(DATA.watch)) grid.append(el("div", "card", el("h3", null, "What to watch"), list(DATA.watch)));
+    section("Callouts", grid);
+  }
+
+  // Skipped parts
+  if (has(DATA.skipped)) {
+    const u = el("ul");
+    DATA.skipped.forEach((x) => u.append(el("li", null, x)));
+    section("Not covered in this report", el("div", "card", u));
+  }
+
+  // Footer
+  const foot = el("footer");
+  if (has(DATA.sources)) foot.append(el("div", null, "Sources: " + DATA.sources.join("; ")));
+  foot.append(el("div", null, "Period: " + (p.start || "?") + " to " + (p.end || "?") + (DATA.generated ? " | Generated " + DATA.generated : "")));
+  foot.append(el("div", null, "This report covers search, AI-answer visibility, content output and social engagement. It does not cover conversions or attribution."));
+  app.append(foot);
+})();
+</script>
+</body>
+</html>

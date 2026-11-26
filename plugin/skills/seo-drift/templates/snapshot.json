@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "id": 1,
+  "target": "https://example.com/page",
+  "target_type": "url",
+  "project_domain": "example.com",
+  "captured_at": "2026-11-26T10:00:00Z",
+  "capture": {
+    "rankscore_reads": true,
+    "firecrawl": false,
+    "google_tier": -1,
+    "skip_cwv": false,
+    "site_health": false,
+    "skipped": [],
+    "pending": []
+  },
+  "rankscore": {
+    "ranked_keywords": {
+      "report_id": null,
+      "created_at": null,
+      "location_code": null,
+      "language_code": null,
+      "totals": { "keywords": 0, "top3": 0, "top10": 0, "traffic_estimate_sum": 0 },
+      "rows": [
+        { "keyword": "", "position": 0, "url": "", "search_volume": 0, "traffic_estimate": 0 }
+      ]
+    },
+    "tracked_keywords": [
+      {
+        "tracked_keyword_id": "",
+        "keyword": "",
+        "target_url": "",
+        "ranking_url": "",
+        "position_display": "",
+        "search_volume": 0,
+        "last_checked_at": null,
+        "history": null
+      }
+    ],
+    "backlinks": {
+      "refreshed_at": null,
+      "truncated": null,
+      "max_rows": 1000,
+      "rank_scale": "uncertain",
+      "totals": { "backlinks": 0, "backlink_rows_sampled": 0, "referring_domains": 0 },
+      "referring_domains": [
+        { "domain": "", "backlinks_count": 0, "rank": 0, "first_seen": null, "last_visited": null, "dofollow_count": 0 }
+      ],
+      "backlinks": [
+        { "url_from": "", "url_to": "", "anchor": "", "dofollow": true, "rank": 0 }
+      ]
+    },
+    "ai_visibility": {
+      "config": { "brand_name": "", "domain": "", "aliases": [], "enabled": true },
+      "queries": [],
+      "snapshots": [],
+      "latest_judgements": []
+    },
+    "site_health": null
+  },
+  "page": {
+    "url": "https://example.com/page",
+    "fetched_via": ["webfetch"],
+    "title": "",
+    "headings": { "h1": [], "h2": [], "h3": [], "h4": [], "h5": [], "h6": [] },
+    "lang": "",
+    "word_count": 0,
+    "internal_links": 0,
+    "images": 0,
+    "body_markdown_path": "page-body.md",
+    "meta_description": null,
+    "canonical": null,
+    "robots": null,
+    "og": { "title": null, "description": null, "image": null },
+    "twitter_card": null,
+    "jsonld": [ { "types": [], "sha256": "" } ],
+    "fingerprint_sha256": "",
+    "rankscore": { "ranked_rows": [], "backlinks_to_page": 0, "tracked_keywords": [] }
+  },
+  "google": {
+    "crux_source": null,
+    "crux_p75": { "lcp_ms": null, "inp_ms": null, "cls": null, "fcp_ms": null, "ttfb_ms": null },
+    "crux_history_baseline": null,
+    "inspection": {
+      "indexStatusVerdict": null,
+      "coverageState": null,
+      "googleCanonical": null,
+      "userCanonical": null,
+      "lastCrawlTime": null
+    }
+  }
+}
