@@ -24,7 +24,14 @@ Claude Code then asks for the plugin settings. All of them are optional:
 | Enable write tools | 18 tools that change data or start jobs (off by default) |
 | Credentials file | Instead of the fields: a file with the key, email and password on lines 1-3 (mode 600) |
 
-The API key and the password are kept in the system credential store. The plugin needs Node.js 20 or later on the PATH. If no credentials are set, the `rankscore` server does not start; skills that need no RankScore data still work.
+The API key and the password are stored as sensitive values: in the macOS Keychain, or in `~/.claude/.credentials.json` on Windows and Linux (treat that file like a password). The other settings go to `pluginConfigs` in your user `settings.json`. The plugin needs Node.js 20 or later on the PATH. If no credentials are set, the `rankscore` server does not start (`/mcp` shows "Connection closed"); skills that need no RankScore data still work.
+
+The settings dialog opens in the interactive `/plugin` interface of a terminal session. `claude plugin install` run from a shell does not prompt. To set or change the settings later:
+
+- In a session: `/plugin` > Installed > rankscore > Configure options, or `/plugin configure rankscore@rankscore-mcp`.
+- From a shell (Claude Code 2.1.285 or later): `claude plugin configure rankscore@rankscore-mcp --values-stdin < values.json`, where `values.json` holds keys such as `{"email": "...", "project_id": "..."}`. Add `--json` to list which settings are set.
+
+Restart Claude Code after a change. On Windows, a credentials file path must be a Windows path (for example `\\wsl.localhost\<distro>\home\<you>\rankscorekey`), because the server runs on Windows.
 
 To try the plugin without installing it: `claude --plugin-dir ~/projects/rankscore-mcp/plugin`.
 
@@ -88,7 +95,7 @@ Set `RANKSCORE_ENABLE_WRITES=1` (plugin: "Enable write tools"). The tools are ma
 
 ## Security
 
-- With email and password set, the server holds your account password. Anyone who can run it or read its config can use your account. Prefer the plugin's credential store or a credentials file with mode 600 over a password in a shared MCP config.
+- With email and password set, the server holds your account password. Anyone who can run it or read its config can use your account. Use the plugin settings (Keychain on macOS, `~/.claude/.credentials.json` elsewhere) or a credentials file with mode 600, never a password in a shared MCP config.
 - MFA is not supported: an account with MFA on may be rejected.
 - The password is only sent to an https login URL (http only for localhost). Redirects are never followed, so a redirect cannot carry the password, the cookie or the key to another host.
 - After a failed login the server waits 30 seconds before it sends the password again. It does not retry a login or a write on HTTP 429.

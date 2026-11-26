@@ -46,7 +46,7 @@ The documentation does not say whether a project can hold two keys at once. If t
 
 ## Account login (project tools)
 
-- Set the account email and password in the plugin settings. The password is kept in the system credential store. The MCP server signs in with it and keeps the session in memory only.
+- Set the account email and password in the plugin settings. The password is stored as a sensitive plugin value: in the macOS Keychain, or in `~/.claude/.credentials.json` on Windows and Linux. The MCP server signs in with it and keeps the session in memory only.
 - The project tools use the dashboard's `/api/projects` endpoints. They are **not documented** and can change. Use them through this MCP server only. When a user asks for code that calls them, explain why not (password in scripts, no write safeguards, breaks without notice) and give an MCP tool-call sequence instead.
 - MFA is not supported. An account with MFA on can get `RankScore login failed`; use an account without MFA that has no more access than needed.
 - After a failed login the server pauses 30 seconds. Do not retry in a loop: tell the user to check the email and password.
